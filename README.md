@@ -1,4 +1,6 @@
 # axios Supply Chain Attack — IoC Scanner & Remediator
+<img width="776" height="447" alt="Screenshot1" src="https://github.com/user-attachments/assets/3423050b-fa6b-44e1-8b11-ca341912135b" />
+
 
 On March 31, 2026, an attacker compromised the npm account of the lead axios maintainer and published two malicious versions — `axios@1.14.1` and `axios@0.30.4` — both injecting a dependency called `plain-crypto-js` that drops a cross-platform RAT on your system.
 
