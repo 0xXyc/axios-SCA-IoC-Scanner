@@ -12,20 +12,37 @@ import argparse, hashlib, json, os, platform, shutil, signal, socket, subprocess
 from pathlib import Path
 from datetime import datetime
 
-# ─── IoC Definitions ──────────────────────────────────────────────
+# ─── IoC Definitions 
 
 C2_DOMAINS = ["sfrclak.com", "callnrwise.com"]
 C2_IP = "142.11.206.73"
 SYSTEM = platform.system()
 
 PAYLOAD_HASHES = {
-    "92ff08773995ebc8d55ec4b8e1a225d0d1e51efa4ef88b8849d0071230c9645a": "macOS RAT (com.apple.act.mond)",
-    "617b67a8e1210e4fc87c92d1d1da45a2f311c08d26e89b12307cf583c900d101": "Windows PS payload (stage2.ps1)",
-    "fcb81618bb15edfdedfb638b4c08a2af9cac9ecfa551af135a8402bf980375cf": "Linux RAT (ld.py)",
+    # Dropper
     "e10b1fa84f1d6481625f741b69892780140d4e0e7769e7491e5f4d894c2e0e09": "Dropper (setup.js)",
+    # Windows
+    "617b67a8e1210e4fc87c92d1d1da45a2f311c08d26e89b12307cf583c900d101": "Win PS RAT (stage2.ps1)",
     "f7d335205b8d7b20208fb3ef93ee6dc817905dc3ae0c10a0b164f4e7d07121cd": "Win persistence (system.bat v1)",
     "e49c2732fb9861548208a78e72996b9c3c470b6b562576924bcc3a9fb75bf9ff": "Win persistence (system.bat v2)",
     "ed8560c1ac7ceb6983ba995124d5917dc1a00288912387a6389296637d5f815c": "Win dropper (6202033.ps1)",
+    # macOS
+    "92ff08773995ebc8d55ec4b8e1a225d0d1e51efa4ef88b8849d0071230c9645a": "macOS NukeSped RAT (com.apple.act.mond -- universal)",
+    "506690fcbd10fbe6f2b85b49a1fffa9d984c376c25ef6b73f764f670e932cab4": "macOS RAT (x86_64)",
+    "4465bdeaddc8c049a67a3d5ec105b2f07dae72fa080166e51b8f487516eb8d07": "macOS RAT (ARM64)",
+    "5b5fbc627502c5797d97b206b6dcf537889e6bea6d4e81a835e103e311690e22": "macOS RAT variant 2",
+    "9c64f1c7eba080b4e5ff17369ddcd00b9fe2d47dacdc61444b4cbfebb23a166c": "macOS RAT v3 (stripped sig)",
+    # Linux
+    "fcb81618bb15edfdedfb638b4c08a2af9cac9ecfa551af135a8402bf980375cf": "Linux RAT (ld.py)",
+    # Malicious package tarballs
+    "58401c195fe0a6204b42f5f90995ece5fab74ce7c69c67a24c61a057325af668": "plain-crypto-js-4.2.1.tgz",
+    "5bb67e88846096f1f8d42a0f0350c9c46260591567612ff9af46f98d1b7571cd": "axios-1.14.1.tgz",
+    "59336a964f110c25c112bcc5adca7090296b54ab33fa95c0744b94f8a0d80c0f": "axios-0.30.4.tgz",
+    # Shellcode / C2 payloads
+    "a224dd73b7ed33e0bf6a2ea340c8f8859dfa9ec5736afa8baea6225bf066b248": "Shellcode payload 1",
+    "5e2ab672c3f98f21925bd26d9a9bba036b67d84fde0dfdbe2cf9b85b170cab71": "Shellcode payload 2",
+    "20df0909a3a0ef26d74ae139763a380e49f77207aa1108d4640d8b6f14cab8ca": "Shellcode trampoline",
+    "e0829aff46c24415fc9b8a346d617ca5877b53cdd80e7a0f92dd877499fbebfe": "C2 response payload",
 }
 
 ARTIFACTS = {
@@ -46,7 +63,7 @@ MALICIOUS_PACKAGES = {
     "@qqbrowser/openclaw-qbot": ["0.0.130"],
 }
 
-# ─── Output ───────────────────────────────────────────────────────
+# ─── Output 
 
 R, G, Y, C, B, X = "\033[91m", "\033[92m", "\033[93m", "\033[96m", "\033[1m", "\033[0m"
 if SYSTEM == "Windows":
@@ -60,7 +77,7 @@ def warn(m):   print(f"  {Y}[~] {m}{X}")
 def fixed(m):  print(f"  {G}{B}[+] {m}{X}")
 def header(t): print(f"\n{B}{'─'*60}\n  {t}\n{'─'*60}{X}")
 
-# ─── Tracker ──────────────────────────────────────────────────────
+# ─── Tracker 
 
 class Tracker:
     def __init__(self):
@@ -77,7 +94,7 @@ class Tracker:
 
 t = Tracker()
 
-# ─── Helpers ──────────────────────────────────────────────────────
+# ─── Helpers 
 
 def sha256(path):
     h = hashlib.sha256()
@@ -93,10 +110,10 @@ def run(cmd, timeout=15):
     except (FileNotFoundError, subprocess.TimeoutExpired, PermissionError):
         return ""
 
-# ─── Scans ────────────────────────────────────────────────────────
+# ─── Scans 
 
 def scan_files():
-    header("FILE ARTIFACT SCAN")
+    header("RAT ARTIFACT SCAN")
     info(f"Platform: {SYSTEM}")
 
     if SYSTEM == "Darwin":
@@ -326,7 +343,7 @@ def scan_dns():
         info("Check manually: journalctl -u systemd-resolved --since '24h ago' | grep sfrclak")
 
 
-# ─── Remediation ──────────────────────────────────────────────────
+# ─── Remediation 
 
 def remediate():
     header("REMEDIATION")
@@ -421,8 +438,9 @@ def remediate():
     except: pass
 
     print(f"""
-  {G}{B}╔══════════════════════════════════════════════════╗
-  ║  REMEDIATION COMPLETE                            ║
+  {G}{B}
+  ╔══════════════════════════════════════════════════╗
+     REMEDIATION COMPLETE                            
   ╚══════════════════════════════════════════════════╝{X}
 
   {R}{B}YOU MUST STILL:{X}
@@ -436,16 +454,17 @@ def remediate():
 """)
 
 
-# ─── Report ───────────────────────────────────────────────────────
+# ─── Report 
 
 def report(do_remediate):
     header("SCAN COMPLETE")
     print(f"\n  {datetime.now():%Y-%m-%d %H:%M:%S} | {SYSTEM} ({platform.node()}) | {platform.platform()}\n")
 
     if t.count == 0:
-        print(f"""  {G}{B}╔══════════════════════════════════════════════╗
-  ║  NO INDICATORS OF COMPROMISE DETECTED        ║
-  ║  Your system appears clean.                  ║
+        print(f"""  {G}{B}
+  ╔══════════════════════════════════════════════╗
+    NO INDICATORS OF COMPROMISE DETECTED        
+    Your system appears clean.                  
   ╚══════════════════════════════════════════════╝{X}
 
   If you ran npm install during the exposure window
@@ -454,9 +473,10 @@ def report(do_remediate):
   - npm cache clean --force
   - Rotate secrets as a precaution""")
     else:
-        print(f"""  {R}{B}╔══════════════════════════════════════════════╗
-  ║  {t.count:>2} INDICATOR(S) OF COMPROMISE FOUND        ║
-  ║  YOUR SYSTEM MAY BE COMPROMISED              ║
+        print(f"""  {R}{B}
+  ╔══════════════════════════════════════════════╗
+    {t.count:>2} INDICATOR(S) OF COMPROMISE FOUND        
+    YOUR SYSTEM MAY BE COMPROMISED              
   ╚══════════════════════════════════════════════╝{X}""")
         if not do_remediate:
             print(f"""
@@ -483,7 +503,7 @@ def report(do_remediate):
 """)
 
 
-# ─── Main ─────────────────────────────────────────────────────────
+# ─── Main 
 
 def main():
     p = argparse.ArgumentParser(description="Axios supply chain IoC scanner")
@@ -495,10 +515,15 @@ def main():
     print(f"""
 {C}{B}
 ╔══════════════════════════════════════════════════════════════╗
-          AXIOS SUPPLY CHAIN ATTACK — IoC SCANNER            
-  Advisory: GHSA-fw8c-xr5c-95f9 | Affected: axios 1.14.1       
-  C2: sfrclak[.]com / 142.11.206.73:8000                      
-  github.com/SwizSecurity                    swiz.dev         
+          AXIOS SUPPLY CHAIN ATTACK — IoC SCANNER 
+
+  Advisory: GHSA-fw8c-xr5c-95f9 | Affected: axios 1.14.1 
+
+  **Compromise occurred on 03-31-2026**
+
+  North Korean-based C2: sfrclak[.]com / 142.11.206.73:8000 
+
+  github.com/0xxyc           hacking.swizsecurity.com         
 ╚══════════════════════════════════════════════════════════════╝{X}
 """)
     info(f"{datetime.now():%Y-%m-%d %H:%M:%S} | {SYSTEM} {platform.release()}" +

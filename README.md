@@ -38,6 +38,19 @@ Zero dependencies — stdlib only. Works on macOS, Windows, and Linux.
 
 When you use `--remediate`, the script will show you exactly what it's about to do and ask you to type `CONFIRM` before it touches anything. Nothing gets deleted without your explicit go-ahead.
 
+## Detection Rules
+
+This repo also includes detection rules you can plug into your security stack:
+
+```
+rules/
+├── yara/axios_rat.yar          # 8 YARA rules (file scanning)
+├── sigma/axios_rat.yml         # 8 Sigma rules (SIEM / EDR)
+└── suricata/axios_rat.rules    # 11 Suricata/Snort rules (network)
+```
+
+The scanner itself checks against **17 SHA256 hashes** covering the dropper, all platform-specific RAT variants (including multiple macOS arch builds), persistence scripts, malicious package tarballs, shellcode payloads, and the C2 response payload.
+
 ## IoCs
 
 | Indicator | Value |

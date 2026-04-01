@@ -1,0 +1,165 @@
+# Axios Supply Chain Attack — Sigma Rules
+# Advisory: GHSA-fw8c-xr5c-95f9 | MAL-2026-2306
+# Source: N3mes1s full RE + dynamic analysis
+
+title: Axios RAT - Windows Registry Persistence
+id: a1b2c3d4-e5f6-7890-abcd-ef0123456789
+status: experimental
+description: Detects MicrosoftUpdate registry persistence created by the axios RAT
+logsource:
+  category: registry_set
+  product: windows
+detection:
+  selection:
+    TargetObject|endswith: '\Software\Microsoft\Windows\CurrentVersion\Run\MicrosoftUpdate'
+    Details|contains: 'system.bat'
+  condition: selection
+level: high
+tags:
+  - attack.persistence
+  - attack.t1547.001
+
+---
+
+title: Axios RAT - PowerShell Download Cradle via scriptblock::Create
+id: b2c3d4e5-f6a7-8901-bcde-f01234567890
+status: experimental
+description: Detects the PowerShell download cradle used by the axios RAT
+logsource:
+  category: ps_script
+  product: windows
+detection:
+  selection:
+    ScriptBlockText|contains|all:
+      - 'scriptblock]::Create'
+      - 'Invoke-WebRequest'
+      - 'packages.npm.org/product'
+  condition: selection
+level: critical
+tags:
+  - attack.execution
+  - attack.t1059.001
+
+---
+
+title: Axios RAT - system.bat Dropped to ProgramData
+id: c3d4e5f6-a7b8-9012-cdef-012345678901
+status: experimental
+description: Detects system.bat persistence script written to ProgramData
+logsource:
+  category: file_event
+  product: windows
+detection:
+  selection:
+    Image|endswith:
+      - '\powershell.exe'
+      - '\wt.exe'
+    TargetFilename: 'C:\ProgramData\system.bat'
+  condition: selection
+level: high
+tags:
+  - attack.persistence
+  - attack.t1547.001
+
+---
+
+title: Axios RAT - Renamed PowerShell Binary (wt.exe LOLBin)
+id: d4e5f6a7-b8c9-0123-defa-123456789012
+status: experimental
+description: Detects wt.exe in ProgramData running hidden PowerShell (axios RAT)
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection:
+    Image: 'C:\ProgramData\wt.exe'
+    CommandLine|contains:
+      - '-w hidden'
+      - '-ep bypass'
+  condition: selection
+level: critical
+tags:
+  - attack.defense_evasion
+  - attack.t1036.003
+
+---
+
+title: Axios RAT - Process Injection via Extension.SubRoutine
+id: e5f6a7b8-c9d0-1234-efab-234567890123
+status: experimental
+description: Detects .NET reflection loading of the axios RAT injector DLL
+logsource:
+  category: ps_script
+  product: windows
+detection:
+  selection:
+    ScriptBlockText|contains|all:
+      - 'Extension.SubRoutine'
+      - 'Run2'
+      - 'Assembly]::Load'
+  condition: selection
+level: critical
+tags:
+  - attack.defense_evasion
+  - attack.t1055
+
+---
+
+title: Axios RAT - macOS com.apple.act.mond Masquerading
+id: f6a7b8c9-d0e1-2345-fabc-345678901234
+status: experimental
+description: Detects the macOS RAT masquerading as an Apple daemon
+logsource:
+  category: process_creation
+  product: macos
+detection:
+  selection:
+    Image|endswith: '/com.apple.act.mond'
+  filter:
+    Image|startswith: '/System/'
+  condition: selection and not filter
+level: critical
+tags:
+  - attack.defense_evasion
+  - attack.t1036.004
+
+---
+
+title: Axios RAT - Linux Python RAT Execution
+id: a7b8c9d0-e1f2-3456-abcd-456789012345
+status: experimental
+description: Detects execution of the Linux Python RAT from /tmp
+logsource:
+  category: process_creation
+  product: linux
+detection:
+  selection:
+    CommandLine|contains|all:
+      - 'python3'
+      - '/tmp/ld.py'
+  condition: selection
+level: high
+tags:
+  - attack.execution
+  - attack.t1059.006
+
+---
+
+title: Axios RAT - npm postinstall Dropper Execution
+id: b8c9d0e1-f2a3-4567-bcde-567890123456
+status: experimental
+description: Detects npm postinstall executing the axios dropper
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection:
+    ParentCommandLine|contains: 'npm'
+    CommandLine|contains|all:
+      - 'node'
+      - 'setup.js'
+  condition: selection
+level: medium
+tags:
+  - attack.execution
+  - attack.t1204.002

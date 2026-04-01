@@ -1,0 +1,26 @@
+# Axios Supply Chain Attack — Suricata/Snort Rules
+# Advisory: GHSA-fw8c-xr5c-95f9 | MAL-2026-2306
+# Source: N3mes1s full RE + dynamic analysis
+
+# C2 DNS lookups
+alert dns $HOME_NET any -> any any (msg:"AXIOS-RAT C2 DNS Lookup - sfrclak.com"; dns.query; content:"sfrclak.com"; nocase; sid:2026001; rev:1; classtype:trojan-activity;)
+alert dns $HOME_NET any -> any any (msg:"AXIOS-RAT C2 DNS Lookup - callnrwise.com"; dns.query; content:"callnrwise.com"; nocase; sid:2026012; rev:1; classtype:trojan-activity;)
+
+# C2 beacon POST
+alert http $HOME_NET any -> $EXTERNAL_NET 8000 (msg:"AXIOS-RAT C2 Beacon - POST to port 8000 with campaign ID"; flow:established,to_server; http.method; content:"POST"; http.uri; content:"/6202033"; sid:2026002; rev:1; classtype:trojan-activity;)
+
+# Platform-specific payload requests
+alert http $HOME_NET any -> $EXTERNAL_NET any (msg:"AXIOS-RAT Payload Request - macOS (product0)"; flow:established,to_server; http.method; content:"POST"; http.request_body; content:"packages.npm.org/product0"; sid:2026003; rev:1; classtype:trojan-activity;)
+alert http $HOME_NET any -> $EXTERNAL_NET any (msg:"AXIOS-RAT Payload Request - Windows (product1)"; flow:established,to_server; http.method; content:"POST"; http.request_body; content:"packages.npm.org/product1"; sid:2026004; rev:1; classtype:trojan-activity;)
+alert http $HOME_NET any -> $EXTERNAL_NET any (msg:"AXIOS-RAT Payload Request - Linux (product2)"; flow:established,to_server; http.method; content:"POST"; http.request_body; content:"packages.npm.org/product2"; sid:2026005; rev:1; classtype:trojan-activity;)
+
+# Legacy IE8 User-Agent (highly anomalous in 2026)
+alert http $HOME_NET any -> $EXTERNAL_NET any (msg:"AXIOS-RAT C2 Beacon - Legacy IE8 User-Agent"; flow:established,to_server; http.user_agent; content:"mozilla/4.0 (compatible|3b| msie 8.0|3b| windows nt 5.1|3b| trident/4.0)"; sid:2026006; rev:1; classtype:trojan-activity;)
+
+# Direct C2 IP contact
+alert ip $HOME_NET any -> 142.11.206.73 any (msg:"AXIOS-RAT C2 IP Contact - 142.11.206.73"; sid:2026007; rev:1; classtype:trojan-activity;)
+
+# Base64-encoded beacon types
+alert http $HOME_NET any -> $EXTERNAL_NET any (msg:"AXIOS-RAT C2 Beacon - Base64 FirstInfo"; flow:established,to_server; http.method; content:"POST"; http.request_body; content:"eyJ0eXBlIjoiRmlyc3RJ"; sid:2026009; rev:1; classtype:trojan-activity;)
+alert http $HOME_NET any -> $EXTERNAL_NET any (msg:"AXIOS-RAT C2 Beacon - Base64 BaseInfo"; flow:established,to_server; http.method; content:"POST"; http.request_body; content:"eyJ0eXBlIjoiQmFzZUlu"; sid:2026008; rev:1; classtype:trojan-activity;)
+alert http $HOME_NET any -> $EXTERNAL_NET any (msg:"AXIOS-RAT C2 Beacon - Base64 CmdResult"; flow:established,to_server; http.method; content:"POST"; http.request_body; content:"eyJ0eXBlIjoiQ21kUmVz"; sid:2026010; rev:1; classtype:trojan-activity;)
