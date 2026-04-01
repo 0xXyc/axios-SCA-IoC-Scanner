@@ -8,7 +8,7 @@ Cross-platform (macOS/Windows/Linux) — stdlib only.
 Author: Jake Swiz @ Swiz Security (hacking.swizsecurity.com)
 """
 
-import argparse, hashlib, json, os, platform, shutil, signal, socket, subprocess, sys
+import argparse, hashlib, json, os, platform, re, shutil, signal, socket, subprocess, sys
 from pathlib import Path
 from datetime import datetime
 
@@ -182,7 +182,9 @@ def scan_npm(scan_paths):
                 try:
                     content = lp.read_text()
                     for ver in ["1.14.1", "0.30.4"]:
-                        if ver in content and "axios" in content:
+                        # Match axios adjacent to version — avoids false positives
+                        # from unrelated packages (e.g. @emotion/styled@11.14.1)
+                        if re.search(rf'axios[/@\-]{re.escape(ver)}', content):
                             found(f"Lockfile refs axios@{ver}: {lp}"); t.hit()
                     if "plain-crypto-js" in content:
                         found(f"Lockfile refs plain-crypto-js: {lp}"); t.hit()
